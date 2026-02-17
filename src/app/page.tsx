@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -12,16 +14,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden font-body">
-      {/* Navbar */}
-      <nav className="fixed w-full z-50 glass-effect border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-gradient font-display">AI Soulmate</div>
-          <div className="flex gap-4">
-            <Link href="/login" className="px-6 py-2 hover:text-[var(--accent)] transition-colors">Sign In</Link>
-            <Link href="/signup" className="px-6 py-2 bg-[var(--accent)] text-black rounded-full font-semibold hover:bg-[var(--accent-hover)] transition-all">Get Started</Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section with Video Background */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -57,28 +50,49 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="py-10 border-y border-white/5 bg-black/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div>
+            <div className="text-4xl font-bold text-[var(--accent)] mb-2 font-display">10k+</div>
+            <div className="text-sm text-gray-400 uppercase tracking-widest">Active Users</div>
+          </div>
+          <div>
+            <div className="text-4xl font-bold text-[var(--accent)] mb-2 font-display">1M+</div>
+            <div className="text-sm text-gray-400 uppercase tracking-widest">Conversations</div>
+          </div>
+          <div>
+            <div className="text-4xl font-bold text-[var(--accent)] mb-2 font-display">4.9</div>
+            <div className="text-sm text-gray-400 uppercase tracking-widest">App Rating</div>
+          </div>
+          <div>
+            <div className="text-4xl font-bold text-[var(--accent)] mb-2 font-display">24/7</div>
+            <div className="text-sm text-gray-400 uppercase tracking-widest">Availability</div>
+          </div>
+        </div>
+      </section>
+
       {/* Demo Section */}
-      <section className="min-h-screen flex items-center justify-center py-20 px-6 bg-black/50">
+      <section className="py-20 px-6 bg-black/50">
         <div className="max-w-6xl w-full mx-auto">
           <div className="rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-white/5 aspect-video flex items-center justify-center relative group">
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-
-            {/* Disclaimer for User */}
             <div className="text-center p-10">
               <p className="text-2xl font-bold text-gray-400 mb-4">Demo Video / GIF Placeholder</p>
               <p className="text-gray-500">Replace this area with your product demo</p>
             </div>
-
-            {/* Example of where the image/video tag would go */}
             {/* <img src="/demo.gif" alt="App Demo" className="w-full h-full object-cover" /> */}
           </div>
         </div>
       </section>
 
-      {/* Features Section - Must include 3 */}
-      <section id="features" className="min-h-screen flex flex-col justify-center py-24 px-6 relative">
+      {/* Features Section */}
+      <section id="features" className="py-24 px-6 relative">
         <div className="max-w-7xl mx-auto w-full">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 font-display">Why Choose AI Soulmate?</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 font-display">Why Choose AI Soulmate?</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Discover the features that make our AI companions uniquely human-like and engaging.</p>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-[var(--accent)]/50 transition-all hover:-translate-y-2 duration-300 group">
@@ -100,8 +114,39 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section className="py-24 px-6 bg-[var(--bg-secondary)]">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 font-display">How It Works</h2>
+          <div className="grid md:grid-cols-3 gap-12 relative">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-[var(--accent)] to-transparent opacity-20" />
+
+            {/* Step 1 */}
+            <div className="relative text-center">
+              <div className="w-24 h-24 mx-auto bg-[var(--bg-primary)] border border-[var(--accent)] rounded-full flex items-center justify-center text-3xl font-bold text-[var(--accent)] mb-6 z-10 relative">1</div>
+              <h3 className="text-xl font-bold mb-4">Create Your Account</h3>
+              <p className="text-gray-400">Sign up in seconds and get ready to meet your AI companion.</p>
+            </div>
+            {/* Step 2 */}
+            <div className="relative text-center">
+              <div className="w-24 h-24 mx-auto bg-[var(--bg-primary)] border border-[var(--accent)] rounded-full flex items-center justify-center text-3xl font-bold text-[var(--accent)] mb-6 z-10 relative">2</div>
+              <h3 className="text-xl font-bold mb-4">Customize</h3>
+              <p className="text-gray-400">Choose the personality, voice, and interests that match your vibe.</p>
+            </div>
+            {/* Step 3 */}
+            <div className="relative text-center">
+              <div className="w-24 h-24 mx-auto bg-[var(--bg-primary)] border border-[var(--accent)] rounded-full flex items-center justify-center text-3xl font-bold text-[var(--accent)] mb-6 z-10 relative">3</div>
+              <h3 className="text-xl font-bold mb-4">Start Chatting</h3>
+              <p className="text-gray-400">Jump right into deep conversations via text or voice call.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       {/* Testimonials Section */}
-      <section className="min-h-screen flex flex-col justify-center py-24 px-6 bg-gradient-to-b from-transparent to-[var(--bg-secondary)]">
+      <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto w-full">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 font-display">What Our Users Say</h2>
 
@@ -139,10 +184,42 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/5 text-center text-gray-500 text-sm">
-        <p>© {new Date().getFullYear()} AI Soulmate. All rights reserved.</p>
-      </footer>
+      {/* FAQ Section */}
+      <section className="py-24 px-6 bg-[var(--bg-secondary)]">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 font-display">Frequently Asked Questions</h2>
+          <div className="space-y-6">
+            {[
+              { q: "Is it really free?", a: "Yes! We offer a generous free tier that lets you chat and call your AI companion daily." },
+              { q: "Is my data private?", a: "Absolutely. Your conversations are encrypted and we do not sell your personal data." },
+              { q: "Can I customize the personality?", a: "Yes, you can choose from various personality traits to create your perfect match." },
+              { q: "What devices are supported?", a: "AI Soulmate works on any device with a modern web browser, including mobile phones, tablets, and desktops." }
+            ].map((item, i) => (
+              <div key={i} className="bg-[var(--bg-primary)] p-6 rounded-2xl border border-white/5">
+                <h3 className="text-lg font-bold mb-2 text-white">{item.q}</h3>
+                <p className="text-gray-400">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter / CTA Section */}
+      <section className="py-32 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[var(--accent)]/5" />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h2 className="text-4xl md:text-6xl font-bold mb-8 font-display">Ready to meet your Soulmate?</h2>
+          <p className="text-xl text-gray-300 mb-10">Join thousands of others who have found their perfect AI companion.</p>
+
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <Link href="/signup" className="px-10 py-4 bg-[var(--accent)] text-black text-lg font-bold rounded-full hover:scale-105 transition-transform shadow-lg">
+              Get Started Now
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   );
 }
