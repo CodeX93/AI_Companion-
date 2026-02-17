@@ -1,5 +1,7 @@
 'use client';
 
+import { useConversation } from '@11labs/react';
+
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -13,10 +15,12 @@ export default function ChatInterface({ companionId }: { companionId: string }) 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // Voice Call State
-  const [isCalling, setIsCalling] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'listening' | 'processing' | 'speaking'>('idle');
-  const [recognition, setRecognition] = useState<any>(null);
+  const conversation = useConversation({
+    onError: (error: any) => {
+      console.error('Conversation error:', error);
+      alert('An error occurred during the call.');
+    },
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -46,102 +50,30 @@ export default function ChatInterface({ companionId }: { companionId: string }) 
     return () => clearInterval(pollInterval);
   }, [companionId]);
 
-  // Initialize Speech Recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const reco = new SpeechRecognition();
-        reco.continuous = false;
-        reco.interimResults = false;
-        reco.lang = 'en-US';
-        setRecognition(reco);
+  const startCall = async () => {
+    try {
+      // Request microphone permission first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Fetch signed URL
+      const response = await fetch('/api/elevenlabs/token');
+      if (!response.ok) {
+        throw new Error('Failed to get token');
       }
+      const { signedUrl } = await response.json();
+
+      // Start conversation
+      await conversation.startSession({
+        signedUrl,
+      });
+    } catch (error) {
+      console.error('Failed to start call:', error);
+      alert('Failed to start call. Please check your microphone permissions and try again.');
     }
-  }, []);
-
-  // Voice Loop Logic
-  useEffect(() => {
-    if (!isCalling || !recognition) return;
-
-    recognition.onstart = () => {
-      if (voiceStatus !== 'speaking') setVoiceStatus('listening');
-    };
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setVoiceStatus('processing');
-      sendMessage(transcript, true); // Send message and indicate it's from voice
-    };
-
-    recognition.onend = () => {
-      // If we are still calling and not speaking or processing, start listening again
-      if (isCalling && voiceStatus === 'listening') {
-        try {
-          recognition.start();
-        } catch (e) {
-          // Already started or specific error
-        }
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("Speech recognition error", event.error);
-      if (event.error === 'not-allowed') {
-        setIsCalling(false);
-        alert("Microphone access denied.");
-      }
-      // If no speech/aborted, onend will trigger restart
-    };
-
-    if (voiceStatus === 'listening') {
-      try {
-        recognition.start();
-      } catch (e) {
-        // already started
-      }
-    } else {
-      recognition.stop();
-    }
-
-    return () => {
-      recognition.stop();
-    };
-  }, [isCalling, voiceStatus, recognition]);
-
-
-  const startCall = () => {
-    if (!recognition) {
-      alert("Your browser does not support voice calling.");
-      return;
-    }
-    setIsCalling(true);
-    setVoiceStatus('listening');
   };
 
-  const endCall = () => {
-    setIsCalling(false);
-    setVoiceStatus('idle');
-    window.speechSynthesis.cancel();
-    if (recognition) recognition.stop();
-  };
-
-  const speakResponse = (text: string) => {
-    if (!isCalling) return;
-
-    setVoiceStatus('speaking');
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    // Attempt to pick a decent voice? Browser dependent.
-    // For now, default is fine.
-
-    utterance.onend = () => {
-      if (isCalling) {
-        setVoiceStatus('listening');
-      }
-    };
-
-    window.speechSynthesis.speak(utterance);
+  const endCall = async () => {
+    await conversation.endSession();
   };
 
   const scrollToBottom = () => {
@@ -220,15 +152,10 @@ export default function ChatInterface({ companionId }: { companionId: string }) 
         // Update the message content to remove the tag
         assistantMessage.content = responseText;
         // Trigger call
-        startCall();
-        // Use a slight timeout to allow state to settle? optional.
+        startCall(); // This will now trigger the ElevenLabs call
       }
 
       setMessages(prev => [...prev.filter(m => m.id !== tempUserMessage.id), tempUserMessage, { ...assistantMessage, content: responseText }]);
-
-      if (isVoice && isCalling) {
-        speakResponse(responseText);
-      }
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -261,7 +188,7 @@ export default function ChatInterface({ companionId }: { companionId: string }) 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden">
       {/* Voice Call Overlay */}
-      {isCalling && (
+      {conversation.status === 'connected' && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -270,22 +197,19 @@ export default function ChatInterface({ companionId }: { companionId: string }) 
           <div className="relative mb-12">
             {/* Visualizer Circles */}
             <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-[var(--accent)] to-[#c29d2f] flex items-center justify-center text-6xl shadow-[0_0_50px_rgba(255,215,0,0.3)] 
-                ${voiceStatus === 'listening' ? 'animate-pulse' : ''} 
-                ${voiceStatus === 'speaking' ? 'animate-bounce' : ''}
-             `}>
+                 ${!conversation.isSpeaking ? 'animate-pulse' : ''} 
+                 ${conversation.isSpeaking ? 'animate-bounce' : ''}
+              `}>
               {companion.gender === 'female' ? '👩' : '👨'}
             </div>
-            {voiceStatus === 'listening' && (
+            {!conversation.isSpeaking && (
               <div className="absolute inset-0 rounded-full border-2 border-[var(--accent)] opacity-50 animate-ping"></div>
             )}
           </div>
 
           <h2 className="text-3xl font-bold mb-4">{companion.name}</h2>
           <p className="text-[var(--text-secondary)] text-xl mb-12 animate-pulse">
-            {voiceStatus === 'listening' && "Listening..."}
-            {voiceStatus === 'processing' && "Thinking..."}
-            {voiceStatus === 'speaking' && "Speaking..."}
-            {voiceStatus === 'idle' && "Connecting..."}
+            {conversation.isSpeaking ? "Speaking..." : "Listening..."}
           </p>
 
           <button

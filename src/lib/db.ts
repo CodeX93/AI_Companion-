@@ -7,8 +7,21 @@ import { encrypt, decrypt } from './encryption';
 export const db = {
   users: {
     async create(email: string, password: string, name: string): Promise<User> {
-      const id = crypto.randomUUID();
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // 1. Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name }, // Store name in Auth metadata as well
+        },
+      });
+
+      if (authError) throw new Error(`Supabase Auth failed: ${authError.message}`);
+      if (!authData.user) throw new Error('Supabase Auth failed: No user returned');
+
+      const id = authData.user.id; // Use Supabase Auth ID
+      const hashedPassword = await bcrypt.hash(password, 10); // Keep local hash for NextAuth Credentials provider if needed, or rely purely on Supabase.
+      // Current auth.ts uses verifyPassword with bcrypt, so we MUST store the hash locally to keep existing login working without a full rewrite of auth.ts
 
       const { error } = await supabase
         .from('users')
@@ -19,7 +32,10 @@ export const db = {
           name,
         });
 
-      if (error) throw new Error(`Failed to create user: ${error.message}`);
+      if (error) {
+        // Cleanup: If DB insert fails, we might want to delete the Auth user, but for now just throw
+        throw new Error(`Failed to create user record: ${error.message}`);
+      }
 
       return {
         id,
